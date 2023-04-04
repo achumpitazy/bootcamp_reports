@@ -1,9 +1,10 @@
 package com.bootcamp.reports.service;
 
+import java.util.Map;
+
 import com.bootcamp.reports.dto.Movements;
 import com.bootcamp.reports.dto.Products;
 
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -23,6 +24,6 @@ public interface ConsultService {
 	
 	Mono<Movements> commissionXAccountId(String id);
 	
-	Flux<Double> averageBalancesXCustomerIdPerson(String id);
+	Mono<Map<Object,Double>> averageBalancesXCustomerIdPerson(String id);
 	
 }

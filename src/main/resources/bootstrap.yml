@@ -1,2 +1,10 @@
 server:
   port: 8087
+#spring:
+#  application:
+#    name: reports
+#  cloud:
+#    config:
+#      uri: http://localhost:8891
+#      username: consumer
+#      password: consumer

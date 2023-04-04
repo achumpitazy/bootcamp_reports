@@ -1,8 +1,14 @@
 package com.bootcamp.reports.service.impl;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -188,9 +194,68 @@ public class ConsultServiceImpl implements ConsultService{
 	}
 
 	@Override
-	public Flux<Double> averageBalancesXCustomerIdPerson(String id) {
-		return null;
+	public Mono<Map<Object,Double>> averageBalancesXCustomerIdPerson(String id) {
+		return  generateResumen(id)
+                .flatMap(map -> Flux.fromIterable(map.entrySet()))
+                .collect(Collectors.groupingBy(
+						Entry::getKey, Collectors.averagingDouble(Entry::getValue)));	
 	}
+	
+	public Flux<Map<LocalDate, Double>> generateResumen(String clienteId) {
+		LocalDateTime fHoy = LocalDateTime.now();
+        LocalDate fechaActual = LocalDate.now();
+        LocalDate fechaInicioMes = fechaActual.withDayOfMonth(1);
+        LocalDate fechaFinMes = fechaActual.withDayOfMonth(fechaActual.getDayOfMonth());
 
+        return accountsRestClient.getAllAccountXCustomerId(clienteId).flatMap(account -> {
+        	
+        	LocalDateTime fCreacion = account.getDateAccount();
+        	Double amountAccount = (fCreacion.getMonthValue()==fHoy.getMonthValue() && fCreacion.getYear()==fHoy.getYear())==true ? account.getStartAmount() : account.getAmount();
+        	return filterAccountsXCustomer(account.getId(), amountAccount)
+                    .filter(movimiento -> movimiento.getTransactionDate().isAfter(fechaInicioMes.atStartOfDay()))
+                    .collect(Collectors.groupingBy(movimiento -> movimiento.getTransactionDate().toLocalDate(), 
+                            Collectors.mapping(Transaction::getBalance, Collectors.toList())))
+                    .map(resumenPorDia -> {
+                        Map<LocalDate, Double> resumen = new HashMap<>();
+                        
+                        Transaction tran = new Transaction();
+                        
+                        Double saldoAnterior = 0.0;
+                        for (LocalDate fecha = fechaInicioMes; fecha.isBefore(fechaFinMes.plusDays(1)); fecha = fecha.plusDays(1)) {
+                        	List<Double> importes = resumenPorDia.getOrDefault(fecha, Collections.emptyList());
+
+                        	Double saldoPromedio;
+                           
+                            if (importes.isEmpty()) {
+                                saldoAnterior = saldoAnterior == 0.0? amountAccount : saldoAnterior;
+                                saldoPromedio = saldoAnterior;
+                                
+                            } else {
+                            	saldoPromedio = importes.get(0);
+                            	saldoAnterior = saldoPromedio;
+                            }
+                            resumen.put(fecha, saldoPromedio);
+                            tran.setTransactionDate(fecha.atStartOfDay());
+                            tran.setAmount(saldoPromedio.doubleValue());
+                        } 
+                        return resumen;
+                    });
+        });
+        		
+    }
+	
+	private Flux<Transaction> filterAccountsXCustomer(String id, Double amount){
+		LocalDateTime fechaActual = LocalDateTime.now();
+		int mesActual = fechaActual.getMonthValue();
+
+	    return transactionsRestClient.getAllXProductId(id)
+				.filter(registro -> registro.getTransactionDate().getMonthValue() == mesActual)
+		        .groupBy(dateTime -> dateTime.getTransactionDate().toLocalDate())
+		        .flatMap( c -> c
+		        		.reduce((max, current) -> 
+		        			current.getTransactionDate().isAfter(max.getTransactionDate()) ? current : max
+		        		)
+		        );
+	}
 
 }

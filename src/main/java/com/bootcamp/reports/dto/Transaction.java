@@ -1,5 +1,6 @@
 package com.bootcamp.reports.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import lombok.Data;
@@ -18,4 +19,9 @@ public class Transaction {
 	private LocalDateTime transactionDate;
 	private String customerType;
 	private Double balance;
+	
+	public BigDecimal convertBalance() {
+		return new BigDecimal(this.balance);
+	}
+	
 }

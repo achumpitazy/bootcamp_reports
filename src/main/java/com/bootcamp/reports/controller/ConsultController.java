@@ -1,5 +1,7 @@
 package com.bootcamp.reports.controller;
 
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -10,7 +12,6 @@ import com.bootcamp.reports.dto.Movements;
 import com.bootcamp.reports.dto.Products;
 import com.bootcamp.reports.service.ConsultService;
 
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -84,7 +85,7 @@ public class ConsultController {
     }
 	
 	@GetMapping("/average/{id}")
-    public Flux<Double> averageBalancesXCustomerIdPerson(@PathVariable String id){
+	Mono<Map<Object,Double>> averageBalancesXCustomerIdPerson(@PathVariable String id){
 		return consultService.averageBalancesXCustomerIdPerson(id);
     }
 		

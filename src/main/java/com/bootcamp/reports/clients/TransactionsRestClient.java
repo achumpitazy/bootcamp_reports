@@ -25,4 +25,14 @@ public class TransactionsRestClient {
                 .retrieve()
                 .bodyToFlux(Transaction.class);
 	}
+	
+	public Flux<Transaction> getTransactionByCustomerId(String customerId) {
+		WebClient webClient = WebClient.create("http://localhost:8086");
+        return  webClient.get()
+                .uri("/transaction/customer/"+customerId)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .retrieve()
+                .bodyToFlux(Transaction.class);
+	}
+	
 }

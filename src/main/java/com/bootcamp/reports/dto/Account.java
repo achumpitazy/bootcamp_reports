@@ -24,4 +24,5 @@ public class Account {
 	private LocalDateTime dateAccount;
 	private String NumberAccount;
 	private String typeCustomer;
+	private Double startAmount;
 }
